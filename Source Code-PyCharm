@@ -1,0 +1,48 @@
+import cv2
+import numpy as np
+import tensorflow as tf
+
+# Load the trained model from Teachable Machine
+model_path = 'path/to/your/teachable_machine_model.h5'
+model = tf.keras.models.load_model(model_path)
+
+# Initialize the webcam
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()
+    
+    # Resize the frame for processing
+    frame_resized = cv2.resize(frame, (224, 224))
+    
+    # Preprocess the frame
+    frame_preprocessed = np.expand_dims(frame_resized, axis=0)
+    
+    # Predict using the loaded model
+    prediction = model.predict(frame_preprocessed)
+    
+    # Extract the class probabilities
+    authorized_prob = prediction[0][0]
+    unauthorized_prob = prediction[0][1]
+    
+    # Set a threshold for face recognition
+    threshold = 0.8
+    
+    # Check if the face is recognized as authorized
+    if authorized_prob > threshold:
+        # If recognized, unlock the system (you can add your locking mechanism here)
+        cv2.putText(frame, "Welcome! Face Recognized", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    else:
+        # If not recognized, lock the system
+        cv2.putText(frame, "Unauthorized Access!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    
+    # Display the frame
+    cv2.imshow('Face Lock System', frame)
+    
+    # Break the loop if 'q' is pressed
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release the webcam and close OpenCV windows
+cap.release()
+cv2.destroyAllWindows()
